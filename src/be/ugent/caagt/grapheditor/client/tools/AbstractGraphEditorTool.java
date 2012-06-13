@@ -31,6 +31,18 @@ public abstract class AbstractGraphEditorTool implements GraphEditorTool {
 	}
 
 	@Override
+	public void handleVertexDown(Vertex vertex) {
+		//empty
+
+	}
+
+	@Override
+	public void handleVertexUp(Vertex vertex) {
+		//empty
+
+	}
+
+	@Override
 	public void handleEdgeClick(Edge edge) {
 		//empty
 

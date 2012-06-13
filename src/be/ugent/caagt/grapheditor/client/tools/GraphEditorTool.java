@@ -9,6 +9,8 @@ public interface GraphEditorTool {
 	
 	void handleCanvasClick(int x, int y);
 	void handleVertexClick(Vertex vertex);
+	void handleVertexDown(Vertex vertex);
+	void handleVertexUp(Vertex vertex);
 	void handleEdgeClick(Edge edge);
 	
 	void handleMove(int x, int y);

@@ -19,12 +19,16 @@ import be.ugent.caagt.grapheditor.client.undo.UndoManager;
 import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.event.dom.client.MouseDownEvent;
+import com.google.gwt.event.dom.client.MouseDownHandler;
 import com.google.gwt.event.dom.client.MouseMoveEvent;
 import com.google.gwt.event.dom.client.MouseMoveHandler;
 import com.google.gwt.event.dom.client.MouseOutEvent;
 import com.google.gwt.event.dom.client.MouseOutHandler;
 import com.google.gwt.event.dom.client.MouseOverEvent;
 import com.google.gwt.event.dom.client.MouseOverHandler;
+import com.google.gwt.event.dom.client.MouseUpEvent;
+import com.google.gwt.event.dom.client.MouseUpHandler;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.MenuBar;
@@ -77,6 +81,30 @@ public class GraphEditor implements EntryPoint {
 		public void onMouseOut(MouseOutEvent event) {
 			Strokeable s = (Strokeable)(event.getSource());
 			s.setStrokeColor("black");
+		}
+	};
+	
+	private MouseDownHandler mouseDownHandler = new MouseDownHandler() {
+		
+		@Override
+		public void onMouseDown(MouseDownEvent event) {
+			if(tool!=null){
+				Circle c = (Circle)(event.getSource());
+				tool.handleVertexDown(circle2Vertex.get(c));
+			}
+			event.stopPropagation();
+		}
+	};
+	
+	private MouseUpHandler mouseUpHandler = new MouseUpHandler() {
+		
+		@Override
+		public void onMouseUp(MouseUpEvent event) {
+			if(tool!=null){
+				Circle c = (Circle)(event.getSource());
+				tool.handleVertexUp(circle2Vertex.get(c));
+			}
+			event.stopPropagation();
 		}
 	};
 	
@@ -143,6 +171,8 @@ public class GraphEditor implements EntryPoint {
 			canvas.add(circle);
 			
 			circle.addClickHandler(vertexHandler);
+			circle.addMouseDownHandler(mouseDownHandler);
+			circle.addMouseUpHandler(mouseUpHandler);
 			circle.addMouseOverHandler(mouseOverHandler);
 			circle.addMouseOutHandler(mouseOutHandler);
 		}
