@@ -17,27 +17,6 @@ public class MoveTool extends AbstractGraphEditorTool {
 	}
 
 	@Override
-	public void handleVertexClick(Vertex vertex) {
-		/*
-		if(selectionModel.getSelectedVertex()==null || 
-				!selectionModel.getSelectedVertex().equals(vertex)){
-			selectionModel.setSelectedVertex(vertex);
-			
-			//store state for undoable management
-			storedVertex = vertex;
-			x = vertex.getX();
-			y = vertex.getY();
-		} else {
-			if(storedVertex!=null && (storedVertex.getX()!=x || storedVertex.getY()!=y)){
-				undoManager.addUndoable(new MoveVertexUndoable(graph, storedVertex, x, y, storedVertex.getX(), storedVertex.getY()));
-				storedVertex = null;
-			}
-			selectionModel.setSelectedVertex(null);
-		}
-		*/
-	}
-
-	@Override
 	public void handleVertexDown(Vertex vertex) {
 		selectionModel.setSelectedVertex(vertex);
 		
