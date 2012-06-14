@@ -17,6 +17,7 @@ import be.ugent.caagt.grapheditor.client.undo.RemoveVertexUndoable;
 import be.ugent.caagt.grapheditor.client.undo.UndoManager;
 
 import com.google.gwt.core.client.EntryPoint;
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.MouseMoveEvent;
@@ -26,9 +27,11 @@ import com.google.gwt.event.dom.client.MouseOutHandler;
 import com.google.gwt.event.dom.client.MouseOverEvent;
 import com.google.gwt.event.dom.client.MouseOverHandler;
 import com.google.gwt.user.client.Command;
-import com.google.gwt.user.client.ui.HTML;
+import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.MenuBar;
 import com.google.gwt.user.client.ui.RootPanel;
+import com.google.gwt.user.client.ui.ToggleButton;
+import com.google.gwt.user.client.ui.UIObject;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.vaadin.contrib.gwtgraphics.client.DrawingArea;
 import com.vaadin.contrib.gwtgraphics.client.Line;
@@ -45,8 +48,6 @@ public class GraphEditor implements EntryPoint {
 	private GraphEditorTool tool = null;
 	
 	private GraphSelectionModel selectionModel = new GraphSelectionModel();
-	
-	private HTML infoText = new HTML();
 	
 	private UserSettings settings;
 	
@@ -108,6 +109,22 @@ public class GraphEditor implements EntryPoint {
 	
 	private GraphListener graphListener = new GraphListener() {
 		
+		private void updateCoordinateString() {
+			//RootPanel.get("coordinateString").getElement().setInnerText(fillCoordinateString(graph));
+			RootPanel panel = RootPanel.get("coordinateString");
+			if(panel != null)
+				panel.getElement().setPropertyString("value", fillCoordinateString(graph));
+		}		
+		
+		private void updateAdjacencyListAndCoordinateString() {
+			//RootPanel.get("adjacencyLabel").getElement().setInnerText(computeAdjacencyString(graph));
+			//RootPanel.get("adjacencyLabel").getElement().setPropertyString("value", computeAdjacencyString(graph));
+			RootPanel panel = RootPanel.get("adjacencyLabel");
+			if(panel != null)
+				panel.getElement().setPropertyString("value", computeAdjacencyString(graph));			
+			updateCoordinateString();
+		}		
+		
 		@Override
 		public void vertexRemoved(Vertex v) {
 			Circle c = vertex2Circle.get(v);
@@ -115,6 +132,7 @@ public class GraphEditor implements EntryPoint {
 			
 			vertex2Circle.remove(v);
 			circle2Vertex.remove(c);
+			updateAdjacencyListAndCoordinateString();
 		}
 		
 		@Override
@@ -145,6 +163,8 @@ public class GraphEditor implements EntryPoint {
 			circle.addClickHandler(vertexHandler);
 			circle.addMouseOverHandler(mouseOverHandler);
 			circle.addMouseOutHandler(mouseOutHandler);
+			
+			updateAdjacencyListAndCoordinateString();
 		}
 		
 		@Override
@@ -155,6 +175,8 @@ public class GraphEditor implements EntryPoint {
 			circle2Vertex.clear();
 			edge2Line.clear();
 			line2Edge.clear();
+			
+			updateAdjacencyListAndCoordinateString();
 		}
 		
 		@Override
@@ -164,6 +186,8 @@ public class GraphEditor implements EntryPoint {
 			
 			line2Edge.remove(l);
 			edge2Line.remove(e);
+			
+			updateAdjacencyListAndCoordinateString();
 		}
 		
 		@Override
@@ -184,6 +208,8 @@ public class GraphEditor implements EntryPoint {
 			line.addClickHandler(edgeHandler);
 			line.addMouseOverHandler(mouseOverHandler);
 			line.addMouseOutHandler(mouseOutHandler);
+			
+			updateAdjacencyListAndCoordinateString();
 		}
 	};
 
@@ -201,7 +227,8 @@ public class GraphEditor implements EntryPoint {
 		selectionModel.addSelectionListener(selectionListener);
 		
 		VerticalPanel mainPanel = new VerticalPanel();
-		RootPanel.get().add(mainPanel);
+		//RootPanel.get().add(mainPanel);
+		RootPanel.get("graph-panel").add(mainPanel);
 		
 		mainPanel.add(buildMenuBar());
 
@@ -225,41 +252,62 @@ public class GraphEditor implements EntryPoint {
 		});
 		mainPanel.add(canvas);
 		
-		mainPanel.add(infoText);
-		infoText.setHTML("Logged in as " + settings.getUserName());
+		mainPanel.add(buildToggleButtonPanel());
 	}
+	
+	private String computeAdjacencyString(Graph graph) {
+		int order = graph.getOrder();
+		String result = "";
+		for(int i = 0; i < order; i++) {
+			Vertex v1 = graph.getVertex(i);
+			for(int j = 0; j < order; j++) {
+				Vertex v2 = graph.getVertex(j);
+				if(v1 != v2 && graph.areAdjacent(v1, v2))
+					result += "1";
+				else
+					result += "0";
+			}
+			if(i < order - 1)
+				result += "\n";
+		}
+		
+		return result;
+	}
+	
+	private String fillCoordinateString(Graph graph) {
+		int order = graph.getOrder();
+		String result = "";
+		for(int i = 0; i < order; i++) {
+			Vertex vertex = graph.getVertex(i);
+			result += vertex.getX() + "-" + vertex.getY() + ";";
+		}
+		
+		return result;
+	}	
+	
+	private final UndoManager undoManager = new UndoManager();
 	
 	private MenuBar buildMenuBar(){
 		final MenuBar mainMenu = new MenuBar();
 		
-		MenuBar fileMenu = new MenuBar(true);
-		fileMenu.addItem("Save", new MessageCommand("Save is not yet implemented"));
-		fileMenu.addItem("Import", new MessageCommand("Import is not yet implemented"));
-		
-		final UndoManager undoManager = new UndoManager();
-		MenuBar editMenu = new MenuBar(true);
-		editMenu.addItem("Undo", new Command() {
+		mainMenu.addItem("Undo", new Command() {
 			
 			@Override
 			public void execute() {
 				undoManager.undo();
 			}
 		});
-		editMenu.addItem("Redo", new Command() {
+		mainMenu.addItem("Redo", new Command() {
 			
 			@Override
 			public void execute() {
 				undoManager.redo();
 			}
-		});
+		});		
 		
-		MenuBar toolsMenu = new MenuBar(true);
-		toolsMenu.addItem("Add", new ToolCommand(new AddTool(graph, selectionModel, undoManager)));
-		toolsMenu.addItem("Connect", new ToolCommand(new ConnectTool(graph, selectionModel, undoManager)));
-		toolsMenu.addItem("Move", new ToolCommand(new MoveTool(graph, selectionModel, undoManager)));
-		toolsMenu.addItem("Delete", new ToolCommand(new DeleteTool(graph, selectionModel, undoManager)));
-		toolsMenu.addSeparator();
-		toolsMenu.addItem("Clear", new Command() {
+		mainMenu.addSeparator();
+		
+		mainMenu.addItem("Clear", new Command() {
 			@Override
 			public void execute() {
 				BulkUndoable bulkUndoable = new BulkUndoable(graph);
@@ -272,44 +320,46 @@ public class GraphEditor implements EntryPoint {
 				undoManager.addUndoable(bulkUndoable);
 				graph.clear();
 			}
-		});
-		
-		MenuBar infoMenu = new MenuBar(true);
-		infoMenu.addItem("Adjacency matrix", new ShowGraphAdjacencyTableCommand(mainMenu, graph));
-		
-		mainMenu.addItem("File", fileMenu);
-		mainMenu.addItem("Edit", editMenu);
-		mainMenu.addItem("Tools", toolsMenu);
-		mainMenu.addItem("Info", infoMenu);
-		
+		});		
+
 		return mainMenu;
 	}
-
-	private class MessageCommand implements Command {
+	
+	private ToggleButtonPanel buildToggleButtonPanel(){
+		final ToggleButtonPanel panel = new ToggleButtonPanel(new HorizontalPanel());
 		
-		private final String message;
-
-		public MessageCommand(String message) {
-			this.message = message;
-		}
-
-		@Override
-		public void execute() {
-			infoText.setHTML(message);
-		}
+		ToggleButton button = new ToggleButton("Add");
+		tool = new AddTool(graph, selectionModel, undoManager);
+		button.addClickHandler(new GraphClickHandler(tool));
+		tool.install();
+		button.setDown(true);
+		panel.add(button);
 		
-	}
-
-	private class ToolCommand implements Command {
+		button = new ToggleButton("Connect");
+		button.addClickHandler(new GraphClickHandler(new ConnectTool(graph, selectionModel, undoManager)));
+		panel.add(button);		
+		
+		button = new ToggleButton("Move");
+		button.addClickHandler(new GraphClickHandler(new MoveTool(graph, selectionModel, undoManager)));
+		panel.add(button);	
+		
+		button = new ToggleButton("Delete");
+		button.addClickHandler(new GraphClickHandler(new DeleteTool(graph, selectionModel, undoManager)));
+		panel.add(button);			
+		
+		return panel;
+	}	
+	
+	private class GraphClickHandler implements ClickHandler {
 		
 		private final GraphEditorTool tool;
 
-		public ToolCommand(GraphEditorTool tool) {
+		public GraphClickHandler(GraphEditorTool tool) {
 			this.tool = tool;
-		}
+		}		
 
 		@Override
-		public void execute() {
+		public void onClick(ClickEvent event) {
 			if(GraphEditor.this.tool!=null){
 				GraphEditor.this.tool.deinstall();
 			}
@@ -318,4 +368,6 @@ public class GraphEditor implements EntryPoint {
 		}
 		
 	}
+	
+	
 }

@@ -44,6 +44,7 @@ public class MoveTool extends AbstractGraphEditorTool {
 
 	@Override
 	public void deinstall() {
+		super.deinstall();
 		if(storedVertex!=null && (storedVertex.getX()!=x || storedVertex.getY()!=y)){
 			undoManager.addUndoable(new MoveVertexUndoable(graph, storedVertex, x, y, storedVertex.getX(), storedVertex.getY()));
 			storedVertex = null;

@@ -48,7 +48,7 @@ public abstract class AbstractGraphEditorTool implements GraphEditorTool {
 
 	@Override
 	public void deinstall() {
-		//empty
+		selectionModel.setSelectedVertex(null);
 	}
 
 }
